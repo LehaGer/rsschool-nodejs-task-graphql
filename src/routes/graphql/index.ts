@@ -280,6 +280,21 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
               equals: id
             })
           },
+          createUser: {
+            type: userType,
+            args: {
+              firstName: {type: GraphQLString},
+              lastName: {type: GraphQLString},
+              email: {type: GraphQLString},
+            },
+            resolve: async (_, {firstName, lastName, email}): Promise<UserEntity | null> => {
+              return fastify.db.users.create({
+                firstName,
+                lastName,
+                email,
+              })
+            }
+          },
         }
       });
       /*const mutationType = new GraphQLObjectType({
@@ -288,7 +303,8 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       });*/
 
       const schema = new GraphQLSchema({
-        query: queryType
+        query: queryType,
+        mutation: queryType
       })
 
       return graphql({
