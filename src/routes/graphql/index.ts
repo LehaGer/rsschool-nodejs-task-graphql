@@ -24,25 +24,6 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
     },
     async function (request, reply) {
 
-      const postType = new GraphQLObjectType({
-        name: 'post',
-        fields: {
-          id: {type: new GraphQLNonNull(GraphQLString)},
-          title: {type: new GraphQLNonNull(GraphQLString)},
-          content: {type: GraphQLString},
-          userId: {type: new GraphQLNonNull(GraphQLString)}
-        }
-      });
-      const userType = new GraphQLObjectType({
-        name: 'User',
-        fields: {
-          id: {type: new GraphQLNonNull(GraphQLString)},
-          firstName: {type: GraphQLString},
-          lastName: {type: GraphQLString},
-          email: {type: GraphQLString},
-          subscribedToUserIds: {type: new GraphQLList(GraphQLString)}
-        }
-      });
       const profilesType = new GraphQLObjectType({
         name: 'profile',
         fields: {
@@ -65,6 +46,15 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
           userId: {type: new GraphQLNonNull(GraphQLString)}
         }
       });
+      const postType = new GraphQLObjectType({
+        name: 'post',
+        fields: {
+          id: {type: new GraphQLNonNull(GraphQLString)},
+          title: {type: new GraphQLNonNull(GraphQLString)},
+          content: {type: GraphQLString},
+          userId: {type: new GraphQLNonNull(GraphQLString)}
+        }
+      });
       const memberTypeType = new GraphQLObjectType({
         name: 'memberType',
         fields: {
@@ -73,13 +63,53 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
           monthPostsLimit: {type: GraphQLInt},
         }
       });
+      const userType = new GraphQLObjectType({
+        name: 'User',
+        fields: {
+          id: {type: new GraphQLNonNull(GraphQLString)},
+          firstName: {type: GraphQLString},
+          lastName: {type: GraphQLString},
+          email: {type: GraphQLString},
+          subscribedToUserIds: {type: new GraphQLList(GraphQLString)},
+          profiles: {
+            type: new GraphQLList(profilesType),
+            resolve: (user): Promise<ProfileEntity[]> => fastify.db.profiles.findMany({
+              key: 'userId',
+              equals: user.id
+            })
+          },
+          posts: {
+            type: new GraphQLList(postType),
+            resolve: (user): Promise<PostEntity[]> => fastify.db.posts.findMany({
+              key: 'userId',
+              equals: user.id
+            })
+          },
+          memberTypes: {
+            type: new GraphQLList(memberTypeType),
+            resolve: async (user): Promise<MemberTypeEntity[]> => {
+              const profiles: ProfileEntity[] = await fastify.db.profiles.findMany({
+                key: 'userId',
+                equals: user.id
+              });
+              const memberTypeIds = profiles.map(profile => profile.memberTypeId);
+              return fastify.db.memberTypes.findMany({
+                key: 'id',
+                equalsAnyOf: memberTypeIds
+              })
+            }
+          },
+        }
+      });
+
+
 
       const queryType = new GraphQLObjectType({
         name: 'RootScheme',
         fields: {
           users: {
             type: new GraphQLList(userType),
-            resolve: async (): Promise<UserEntity[]> => fastify.db.users.findMany()
+            resolve: async (): Promise<UserEntity[]> => fastify.db.users.findMany(),
           },
           profiles: {
             type: new GraphQLList(profilesType),
