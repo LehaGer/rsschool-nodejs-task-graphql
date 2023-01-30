@@ -102,8 +102,6 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         }
       });
 
-
-
       const queryType = new GraphQLObjectType({
         name: 'RootScheme',
         fields: {
