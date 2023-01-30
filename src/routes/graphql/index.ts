@@ -93,6 +93,46 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
             type: new GraphQLList(memberTypeType),
             resolve: async (): Promise<MemberTypeEntity[]> => fastify.db.memberTypes.findMany()
           },
+          user: {
+            type: userType,
+            args: {
+              id: {type: GraphQLString}
+            },
+            resolve: async (_, {id}): Promise<UserEntity|null> => fastify.db.users.findOne({
+              key: 'id',
+              equals: id
+            })
+          },
+          profile: {
+            type: profilesType,
+            args: {
+              id: {type: GraphQLString}
+            },
+            resolve: async (_, {id}): Promise<ProfileEntity | null> => fastify.db.profiles.findOne({
+              key: 'id',
+              equals: id
+            })
+          },
+          post: {
+            type: postType,
+            args: {
+              id: {type: GraphQLString}
+            },
+            resolve: async (_, {id}): Promise<PostEntity | null> => fastify.db.posts.findOne({
+              key: 'id',
+              equals: id
+            })
+          },
+          memberType: {
+            type: memberTypeType,
+            args: {
+              id: {type: GraphQLString}
+            },
+            resolve: async (_, {id}): Promise<MemberTypeEntity | null> => fastify.db.memberTypes.findOne({
+              key: 'id',
+              equals: id
+            })
+          },
         }
       });
       /*const mutationType = new GraphQLObjectType({
@@ -107,6 +147,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       return graphql({
         schema,
         source: request.body.query ?? '',
+        variableValues: request.body.variables
       })
     }
   );
