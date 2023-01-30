@@ -280,6 +280,11 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
               equals: id
             })
           },
+        }
+      });
+      const mutationType = new GraphQLObjectType({
+        name: 'RootSchemeMutation',
+        fields: {
           createUser: {
             type: userType,
             args: {
@@ -295,16 +300,52 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
               })
             }
           },
+          createProfile: {
+            type: profilesType,
+            args: {
+              avatar: {type: GraphQLString},
+              sex: {type: GraphQLString},
+              birthday: {type: GraphQLFloat},
+              country: {type: GraphQLString},
+              street: {type: GraphQLString},
+              city: {type: GraphQLString},
+              memberTypeId: {type: GraphQLString},
+              userId: {type: new GraphQLNonNull(GraphQLString)}
+            },
+            resolve: async (_, {avatar, sex, birthday, country, street, city, memberTypeId, userId}): Promise<ProfileEntity | null> => {
+              return fastify.db.profiles.create({
+                avatar,
+                sex,
+                birthday,
+                country,
+                street,
+                city,
+                memberTypeId,
+                userId
+              })
+            }
+          },
+          createPost: {
+            type: postType,
+            args: {
+              title: {type: new GraphQLNonNull(GraphQLString)},
+              content: {type: GraphQLString},
+              userId: {type: new GraphQLNonNull(GraphQLString)}
+            },
+            resolve: async (_, {title, content, userId}): Promise<PostEntity | null> => {
+              return fastify.db.posts.create({
+                title,
+                content,
+                userId,
+              })
+            }
+          },
         }
       });
-      /*const mutationType = new GraphQLObjectType({
-        name: 'mutation',
-        fields: {}
-      });*/
 
       const schema = new GraphQLSchema({
         query: queryType,
-        mutation: queryType
+        mutation: mutationType
       })
 
       return graphql({
